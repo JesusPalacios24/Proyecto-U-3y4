@@ -1,0 +1,32 @@
+[
+    {
+        "id": 1,
+        "title": "Viaje al centro de la tierra",
+        "content": "Ciencia Ficci\u00c3\u00b3n, Novela cient\u00c3\u00adfica, Ficci\u00c3\u00b3n de aventuras",
+        "author": "Julio Verne"
+    },
+    {
+        "id": 2,
+        "title": "La caba\u00c3\u00b1a",
+        "content": "Ciencia Ficci\u00c3\u00b3n, Terror, Suspenso",
+        "author": "William Paul Young"
+    },
+    {
+        "id": 3,
+        "title": "Orgullo y prejuicio",
+        "content": "Romance, Drama",
+        "author": "Jane Austen"
+    },
+    {
+        "id": 4,
+        "title": "Matar a un ruise\u00c3\u00b1or",
+        "content": "Drama, \u00c3\u2030tica, Derechos humanos",
+        "author": "Harper Lee"
+    },
+    {
+        "id": 5,
+        "title": "El gran Gatsby",
+        "content": "Tragedia, Cl\u00c3\u00a1sico",
+        "author": "F. Scott Fitzgerald"
+    }
+]
