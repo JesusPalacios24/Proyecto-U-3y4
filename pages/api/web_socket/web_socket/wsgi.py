@@ -1,5 +1,5 @@
 """
-WSGI config for microservicio project.
+WSGI config for web_socket project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
@@ -11,6 +11,6 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'microservicio.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'web_socket.settings')
 
 application = get_wsgi_application()
