@@ -34,7 +34,7 @@ def detalle_libro(request, id):
     libro = next((libro for libro in libros if libro['id'] == id), None)
     if libro is None:
         return Response(status=status.HTTP_404_NOT_FOUND)
-    
+
     return JsonResponse(libro)
 
 # Crear un nuevo libro
@@ -43,9 +43,14 @@ def detalle_libro(request, id):
 def crear_libro(request):
     libros = load_libros()
     new_libro = request.data
+    
+    # Asegúrate de que el ID sea un entero
+    new_libro['id'] = int(new_libro['id'])
+    
     libros.append(new_libro)
     save_libros(libros)
     return JsonResponse(new_libro, status=status.HTTP_201_CREATED)
+
 
 # Actualizar un libro existente
 @api_view(['PATCH'])
