@@ -1,72 +1,125 @@
-import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
+import { useEffect, useState, useRef } from "react"; 
+import { useRouter } from "next/router"; 
 
-export default function Home() {
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [newBook, setNewBook] = useState({ id: "", title: "", author: "", content: "" });
-  const API_URL = "http://localhost:8000/libros/"; // Asegúrate de que esta URL esté correcta
-  const router = useRouter();
+export default function Home() { 
+  const [items, setItems] = useState([]); 
+  const [loading, setLoading] = useState(true); 
+  const [newBook, setNewBook] = useState({ id: "", title: "", author: "", content: "" }); 
+  const [socketConnected, setSocketConnected] = useState(false); 
+  const socketRef = useRef(null); 
+  const API_URL = "http://localhost:8000/libros/"; 
+  const router = useRouter(); 
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch(API_URL);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        setItems(data);
-      } catch (error) {
-        console.error("Error al obtener datos:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+  useEffect(() => { 
+    socketRef.current = new WebSocket("ws://localhost:8001/ws/libros/"); 
+    
+    socketRef.current.onopen = () => { 
+      console.log("WebSocket conectado"); 
+      setSocketConnected(true); 
+    }; 
+    
+    socketRef.current.onclose = () => { 
+      console.log("WebSocket desconectado"); 
+      setSocketConnected(false); 
+    }; 
+    
+    socketRef.current.onerror = (error) => { 
+      console.error("Error en WebSocket:", error); 
+    }; 
+    
+    return () => { 
+      if (socketRef.current) { 
+        socketRef.current.close(); 
+      } 
+    }; 
   }, []);
 
-  const addBook = async () => {
-    try {
-      const response = await fetch(`${API_URL}nuevo/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newBook),
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      setItems((prevItems) => [...prevItems, data]);
-      setNewBook({ id: "", title: "", author: "", content: "" });
-    } catch (error) {
-      console.error("Error al agregar el libro:", error);
-    }
+  const rentBook = (book) => { 
+    if (socketConnected && socketRef.current) { 
+      const bookId = parseInt(book.id); 
+      if (isNaN(bookId)) { 
+        console.error("El ID del libro no es válido:", book.id); 
+        return; 
+      } 
+      
+      const message = { 
+        type: "rent_book", 
+        bookId, 
+        title: book.title, 
+      };
+      
+      console.log("Enviando mensaje WebSocket:", JSON.stringify(message)); 
+      socketRef.current.send(JSON.stringify(message)); 
+      console.log("Mensaje enviado"); 
+    } else { 
+      console.error("El WebSocket no está conectado."); 
+    } 
   };
 
-  const deleteBook = async (id) => {
-    try {
-      const response = await fetch(`${API_URL}${id}/eliminar/`, {
-        method: "DELETE",
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      setItems((prevItems) => prevItems.filter((item) => item.id !== id));
-    } catch (error) {
-      console.error("Error al eliminar el libro:", error);
-    }
+  useEffect(() => { 
+    const fetchData = async () => { 
+      try { 
+        const response = await fetch(API_URL); 
+        if (!response.ok) { 
+          throw new Error(`HTTP error! status: ${response.status}`); 
+        } 
+        
+        const data = await response.json(); 
+        setItems(data); 
+      } catch (error) { 
+        console.error("Error al obtener datos:", error); 
+      } finally { 
+        setLoading(false); 
+      } 
+    }; 
+    
+    fetchData(); 
+  }, []);
+
+  const addBook = async () => { 
+    try { 
+      const response = await fetch(`${API_URL}nuevo/`, { 
+        method: "POST", 
+        headers: { 
+          "Content-Type": "application/json", 
+        }, 
+        body: JSON.stringify(newBook), 
+      }); 
+      
+      if (!response.ok) { 
+        throw new Error(`HTTP error! status: ${response.status}`); 
+      } 
+      
+      const data = await response.json(); 
+      setItems((prevItems) => [...prevItems, data]); 
+      setNewBook({ id: "", title: "", author: "", content: "" }); 
+    } catch (error) { 
+      console.error("Error al agregar el libro:", error); 
+    } 
   };
 
-  const goToBookDetails = (id) => {
-    router.push(`/libro/${id}`);
+  const deleteBook = async (id) => { 
+    try { 
+      const response = await fetch(`${API_URL}${id}/eliminar/`, { 
+        method: "DELETE", 
+      }); 
+      
+      if (!response.ok) { 
+        throw new Error(`HTTP error! status: ${response.status}`); 
+      } 
+      
+      setItems((prevItems) => prevItems.filter((item) => item.id !== id)); 
+    } catch (error) { 
+      console.error("Error al eliminar el libro:", error); 
+    } 
   };
 
-  const viewRentedBooks = () => {
-    router.push('/ui/librosR'); // Asegúrate de que esta ruta esté definida en 'pages/ui/librosR.jsx'
+  const goToBookDetails = (id) => { 
+    router.push(`/libro/${id}`); 
+  };
+
+  const viewRentedBooks = () => { 
+    router.push("/ui/librosR"); 
   };
 
   return (
@@ -102,11 +155,18 @@ export default function Home() {
                     >
                       Eliminar
                     </button>
+                    <button
+                      onClick={() => rentBook(item)}
+                      className="bg-green-500 text-white px-4 py-1 rounded ml-2"
+                    >
+                      Rentar
+                    </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+
           <div className="mt-4">
             <input
               type="text"
@@ -140,7 +200,11 @@ export default function Home() {
               Añadir Libro
             </button>
           </div>
-          <button onClick={viewRentedBooks} className="my-9 bg-green-500 text-white px-4 py-1 rounded mb-4">
+
+          <button 
+            onClick={viewRentedBooks} 
+            className="my-9 bg-green-500 text-white px-4 py-1 rounded mb-4"
+          >
             Ver Libros Rentados
           </button>
         </div>

@@ -53,18 +53,19 @@ def crear_libro(request):
 
 
 # Actualizar un libro existente
-@api_view(['PATCH'])
+@api_view(['PUT', 'PATCH'])
 @csrf_exempt
 def actualizar_libro(request, id):
     libros = load_libros()
     libro = next((libro for libro in libros if libro['id'] == id), None)
     if libro is None:
         return Response(status=status.HTTP_404_NOT_FOUND)
-    
-    # Update the book with the new data from the request
+
+    # Actualiza el libro con los nuevos datos del request
     libro.update(request.data)
     save_libros(libros)
     return JsonResponse(libro)
+
 
 # Eliminar un libro
 @api_view(['DELETE'])

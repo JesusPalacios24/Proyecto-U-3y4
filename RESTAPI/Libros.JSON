@@ -1,8 +1,20 @@
 [
     {
         "id": 1,
-        "title": "Libro 1",
-        "author": "Magister99",
-        "content": "ficci\u00f3n"
+        "title": "Libro 3",
+        "author": "Magister999",
+        "content": "ficci\u00f3n y amor"
+    },
+    {
+        "id": 2,
+        "title": "Libasd",
+        "author": "awe12",
+        "content": "pito"
+    },
+    {
+        "id": 3,
+        "title": "weq",
+        "author": "sdfsdf",
+        "content": "erwer342r cscvsdfsd"
     }
 ]
