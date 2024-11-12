@@ -1,41 +1,37 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 
-export default function RentedBooks() {
-  const [rentedBooks, setRentedBooks] = useState([]); // Estado para libros rentados
-  const socketRef = useRef(null); // Referencia para el WebSocket
+export default function LibrosR() {
+  const [rentedBooks, setRentedBooks] = useState([]);
+  const socketRef = useRef(null); // Asegúrate de inicializar el socketRef
+  const [socketConnected, setSocketConnected] = useState(false);
 
   useEffect(() => {
-    // Conectar al WebSocket
+    // Conectar WebSocket
     socketRef.current = new WebSocket("ws://localhost:8001/ws/libros/");
 
     socketRef.current.onopen = () => {
-      console.log("Conexión WebSocket abierta para libros rentados");
+      console.log("WebSocket conectado");
+      setSocketConnected(true);
     };
 
     socketRef.current.onclose = () => {
-      console.log("Conexión WebSocket cerrada");
+      console.log("WebSocket desconectado");
+      setSocketConnected(false);
     };
 
-    // Escuchar mensajes del WebSocket
-    socketRef.current.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      console.log("Mensaje recibido del servidor:", data);
+    socketRef.current.onerror = (error) => {
+      console.error("Error en WebSocket:", error);
+    };
 
-      if (data.type === "rent_book" && data.bookId) {
-        console.log(`Libro rentado: ID ${data.bookId}, Título ${data.title}`);
-        setRentedBooks((prevRentedBooks) => [
-          ...prevRentedBooks,
-          { id: data.bookId, title: data.title },
-        ]);
+    socketRef.current.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      if (message.type === "rent_book") {
+        const rentedBook = { id: message.bookId, title: message.title };
+        // Actualiza la lista de libros rentados
+        setRentedBooks((prevBooks) => [...prevBooks, rentedBook]);
       }
     };
 
-    // Manejar errores
-    socketRef.current.onerror = (error) => {
-      console.error("Error WebSocket:", error);
-    };
-
-    // Limpiar la conexión cuando el componente se desmonte
     return () => {
       if (socketRef.current) {
         socketRef.current.close();
@@ -44,20 +40,34 @@ export default function RentedBooks() {
   }, []);
 
   return (
-    <div className="container mx-auto p-4">
-      <h2 className="text-2xl font-bold mb-4">Libros Rentados</h2>
-      {rentedBooks.length === 0 ? (
-        <p>No hay libros rentados.</p>
-      ) : (
-        <ul>
-          {rentedBooks.map((book) => (
-            <li key={book.id} className="mb-2">
-              {book.title} (ID: {book.id})
-            </li>
-          ))}
-        </ul>
-      )}
+    <div className="bg-gray-50 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="bg-white p-6 shadow-lg rounded-lg">
+          <h1 className="text-3xl font-semibold text-center text-gray-800 mb-6">Libros Rentados</h1>
+
+          <table className="min-w-full table-auto">
+            <thead className="bg-blue-600 text-white">
+              <tr>
+                <th className="py-3 px-4 text-left">ID</th>
+                <th className="py-3 px-4 text-left">Título</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white">
+              {rentedBooks.map((book) => (
+                <tr key={book.id} className="border-t hover:bg-gray-100">
+                  <td className="py-2 px-4 text-gray-800">{book.id}</td>
+                  <td className="py-2 px-4 text-gray-800">{book.title}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {/* Asegúrate de tener más espacio si hay pocos libros rentados */}
+          {rentedBooks.length === 0 && (
+            <p className="text-center text-gray-500 mt-4">No hay libros rentados aún.</p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
-

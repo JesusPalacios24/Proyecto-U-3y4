@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 
 export default function Home() { 
   const [items, setItems] = useState([]); 
+  const [rentedBooks, setRentedBooks] = useState([]);  // Lista de libros rentados
   const [loading, setLoading] = useState(true); 
   const [newBook, setNewBook] = useState({ id: "", title: "", author: "", content: "" }); 
   const [socketConnected, setSocketConnected] = useState(false); 
@@ -10,6 +11,7 @@ export default function Home() {
   const API_URL = "http://localhost:8000/libros/"; 
   const router = useRouter(); 
 
+  // WebSocket initialization
   useEffect(() => { 
     socketRef.current = new WebSocket("ws://localhost:8001/ws/libros/"); 
     
@@ -25,8 +27,9 @@ export default function Home() {
     
     socketRef.current.onerror = (error) => { 
       console.error("Error en WebSocket:", error); 
-    }; 
-    
+    };
+
+    // Cleanup WebSocket connection when component unmounts
     return () => { 
       if (socketRef.current) { 
         socketRef.current.close(); 
@@ -34,28 +37,32 @@ export default function Home() {
     }; 
   }, []);
 
-  const rentBook = (book) => { 
-    if (socketConnected && socketRef.current) { 
-      const bookId = parseInt(book.id); 
-      if (isNaN(bookId)) { 
-        console.error("El ID del libro no es válido:", book.id); 
-        return; 
-      } 
-      
-      const message = { 
-        type: "rent_book", 
-        bookId, 
-        title: book.title, 
-      };
-      
-      console.log("Enviando mensaje WebSocket:", JSON.stringify(message)); 
-      socketRef.current.send(JSON.stringify(message)); 
-      console.log("Mensaje enviado"); 
-    } else { 
-      console.error("El WebSocket no está conectado."); 
-    } 
-  };
+  // Function to rent a book and send message via WebSocket
+  const rentBook = (book) => {
+  if (socketConnected && socketRef.current) {
+    const bookId = parseInt(book.id);
+    if (isNaN(bookId)) {
+      console.error("El ID del libro no es válido:", book.id);
+      return;
+    }
+    
+    const message = {
+      type: "rent_book",
+      bookId,
+      title: book.title,
+    };
+    
+    console.log("Enviando mensaje WebSocket:", JSON.stringify(message));
+    socketRef.current.send(JSON.stringify(message));
 
+    // Add the rented book to the rentedBooks list
+    setRentedBooks((prevBooks) => [...prevBooks, book]);
+  } else {
+    console.error("El WebSocket no está conectado.");
+  }
+};
+
+  // Fetch data (books) from the API
   useEffect(() => { 
     const fetchData = async () => { 
       try { 
@@ -76,6 +83,7 @@ export default function Home() {
     fetchData(); 
   }, []);
 
+  // Function to add a new book
   const addBook = async () => { 
     try { 
       const response = await fetch(`${API_URL}nuevo/`, { 
@@ -98,6 +106,7 @@ export default function Home() {
     } 
   };
 
+  // Function to delete a book
   const deleteBook = async (id) => { 
     try { 
       const response = await fetch(`${API_URL}${id}/eliminar/`, { 
@@ -114,17 +123,15 @@ export default function Home() {
     } 
   };
 
+  // Function to navigate to book details page
   const goToBookDetails = (id) => { 
     router.push(`/libro/${id}`); 
-  };
-
-  const viewRentedBooks = () => { 
-    router.push("/ui/librosR"); 
   };
 
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Lista de Libros</h1>
+      
       {loading ? (
         <p className="text-gray-500">Cargando...</p>
       ) : (
@@ -167,6 +174,7 @@ export default function Home() {
             </tbody>
           </table>
 
+          {/* Add Book Form */}
           <div className="mt-4">
             <input
               type="text"
@@ -201,12 +209,15 @@ export default function Home() {
             </button>
           </div>
 
-          <button 
-            onClick={viewRentedBooks} 
-            className="my-9 bg-green-500 text-white px-4 py-1 rounded mb-4"
-          >
-            Ver Libros Rentados
-          </button>
+          {/* Botón para redirigir a la página de Libros Rentados */}
+          <div className="mt-4">
+            <button
+              onClick={() => router.push('/ui/librosR')}
+              className="bg-yellow-500 text-white px-4 py-1 rounded"
+            >
+              Ver Libros Rentados
+            </button>
+          </div>
         </div>
       )}
     </div>

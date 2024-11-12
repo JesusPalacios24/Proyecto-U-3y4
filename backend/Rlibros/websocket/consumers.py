@@ -24,14 +24,16 @@ class ChatConsumer(WebsocketConsumer):
             
             # Procesa el libro rentado y envía una respuesta
             print(f"Libro rentado: ID {book_id}, Título {title}")
-
-            # Envía una confirmación de vuelta al cliente
-            self.send(text_data=json.dumps({
-                "type": "rent_book",
-                "bookId": book_id,
-                "title": title,  # Indica que el libro fue rentado
-            }))
+            
+            # Enviar el mensaje a todos los clientes conectados
+            for client in ChatConsumer.clients:
+                client.send(text_data=json.dumps({
+                    "type": "rent_book",
+                    "bookId": book_id,
+                    "title": title,  # Indica que el libro fue rentado
+                }))
         
         else:
             # Si el mensaje no es de tipo "rent_book", ignóralo o maneja otro tipo de mensaje
             print("Tipo de mensaje no reconocido")
+
